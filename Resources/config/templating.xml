@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://www.symfony-project.org/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.symfony-project.org/schema/dic/services http://www.symfony-project.org/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="templating.helper.javascripts.class">Bundle\Tecbot\AssetPackagerBundle\Templating\Helper\JavascriptsHelper</parameter>
+        <parameter key="templating.helper.stylesheets.class">Bundle\Tecbot\AssetPackagerBundle\Templating\Helper\StylesheetsHelper</parameter>
+    </parameters>
+    
+    <services>
+        <service id="templating.helper.javascripts" class="%templating.helper.javascripts.class%">
+            <tag name="templating.helper" alias="javascripts" />
+            <argument type="service" id="templating.helper.assets" />
+            <argument type="service" id="templating.helper.router" />
+            <argument type="service" id="assetpackager.packager" />
+            <argument type="collection">
+                <argument key="cache_dir">%kernel.cache_dir%/%assetpackager.options.cache_dir%/js/</argument>
+                <argument key="debug">%kernel.debug%</argument>
+                <argument key="package_assets">%assetpackager.options.package_assets%</argument>
+                <argument key="compress_assets">%assetpackager.options.compress_assets%</argument>
+            </argument>
+            <call method="setCompressor">
+                <argument type="service" id="assetpackager.compressor.javascript" />
+            </call>
+            <call method="setDumper">
+                <argument type="service" id="assetpackager.dumper.javascript" />
+            </call>
+        </service>
+        
+        <service id="templating.helper.stylesheets" class="%templating.helper.stylesheets.class%">
+            <tag name="templating.helper" alias="stylesheets" />
+            <argument type="service" id="templating.helper.assets" />
+            <argument type="service" id="templating.helper.router" />
+            <argument type="service" id="assetpackager.packager" />
+            <argument type="collection">
+                <argument key="cache_dir">%kernel.cache_dir%/%assetpackager.options.cache_dir%/css/</argument>
+                <argument key="debug">%kernel.debug%</argument>
+                <argument key="package_assets">%assetpackager.options.package_assets%</argument>
+                <argument key="compress_assets">%assetpackager.options.compress_assets%</argument>
+                <argument key="embed_assets">%assetpackager.options.embed_assets%</argument>
+            </argument>
+            <call method="setCompressor">
+                <argument type="service" id="assetpackager.compressor.stylesheet" />
+            </call>
+            <call method="setDumper">
+                <argument type="service" id="assetpackager.dumper.stylesheet" />
+            </call>
+        </service>
+    </services>
+</container>
