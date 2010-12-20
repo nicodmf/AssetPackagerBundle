@@ -54,7 +54,7 @@ class AssetPackagerExtension extends Extension
             }
         }
 
-        if (isset($config['js']['compressor'])) {
+        if (isset($config['js']['compressor']) && $container->has('assetpackager.compressor.javascript.' . strtolower($config['js']['compressor']))) {
             $config['js']['compressor'] = strtolower($config['js']['compressor']);
         } else {
             $config['js']['compressor'] = 'jsmin';
@@ -62,7 +62,7 @@ class AssetPackagerExtension extends Extension
 
         $container->setAlias('assetpackager.compressor.javascript', 'assetpackager.compressor.javascript.' . $config['js']['compressor']);
 
-        if (isset($config['css']['compressor'])) {
+        if (isset($config['css']['compressor']) && $container->has('assetpackager.compressor.stylesheet.' . strtolower($config['css']['compressor']))) {
             $config['css']['compressor'] = strtolower($config['css']['compressor']);
         } else {
             $config['css']['compressor'] = 'cssmin';

@@ -8,6 +8,7 @@ class Packager
 {
     protected $webPath;
     protected $cacheDir;
+    protected $vendorDir;
     protected $packages = array();
 
     /**
@@ -23,6 +24,8 @@ class Packager
         $this->webPath = preg_replace('#' . preg_quote(basename($request->server->get('SCRIPT_NAME')), '#') . '$#', '', $request->server->get('SCRIPT_FILENAME'));
 
         $this->cacheDir = $cacheDir;
+        $this->vendorDir = realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor');
+
         $this->packages['js'] = $this->createPackages($javascriptPackages);
         $this->packages['css'] = $this->createPackages($stylesheetPackages);
     }
@@ -45,6 +48,46 @@ class Packager
     public function setWebPath($webPath)
     {
         $this->webPath = $webPath;
+    }
+
+    /**
+     * Returns the cache dir
+     * 
+     * @return string
+     */
+    public function getCacheDir()
+    {
+        return $this->cacheDir;
+    }
+
+    /**
+     * Set the cache dir
+     * 
+     * @param string $cacheDir 
+     */
+    public function setCacheDir($cacheDir)
+    {
+        $this->cacheDir = $cacheDir;
+    }
+
+    /**
+     * Returns the vendor dir
+     * 
+     * @return string
+     */
+    public function getVendorDir()
+    {
+        return $this->vendorDir;
+    }
+
+    /**
+     * Set the vendor dir
+     * 
+     * @param string $vendorDir 
+     */
+    public function setVendorDir($vendorDir)
+    {
+        $this->vendorDir = $vendorDir;
     }
 
     /**
