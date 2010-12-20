@@ -13,37 +13,13 @@ use Symfony\Component\Templating\Helper\Helper;
 
 abstract class AssetPackagerHelper extends Helper
 {
-    /**
-     * @var Symfony\Bundle\FrameworkBundle\Templating\Helper\AssetsHelper 
-     */
     protected $assetsHelper;
-    /**
-     * @var Symfony\Bundle\FrameworkBundle\Templating\Helper\RouterHelper 
-     */
     protected $routerHelper;
-    /**
-     * @var Bundle\Tecbot\AssetPackagerBundle\Packager\Packager
-     */
     protected $packager;
-    /**
-     * @var Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\CompressorInterface 
-     */
     protected $compressor;
-    /**
-     * @var Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\DumperInterface 
-     */
     protected $dumper;
-    /**
-     * @var array
-     */
     protected $options;
-    /**
-     * @var array
-     */
     protected $packages = array();
-    /**
-     * @var array
-     */
     protected $fileResources = array();
 
     /**
@@ -235,7 +211,7 @@ abstract class AssetPackagerHelper extends Helper
         $this->writeCacheFile($this->getCacheFile($file, $this->getExtension()), $dump);
 
         if ($this->options['debug']) {
-            $this->writeCacheFile($this->getCacheFile($file, 'meta'), serialize($this->resources[$package]));
+            $this->writeCacheFile($this->getCacheFile($file, 'meta'), serialize($this->fileResources[$package]));
         }
     }
 
