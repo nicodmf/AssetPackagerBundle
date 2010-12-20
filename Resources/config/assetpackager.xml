@@ -50,7 +50,7 @@
         
         <service id="assetpackager.compressor.javascript.yui" class="%assetpackager.compressor.javascript.yui.class%" shared="true">
             <argument type="service" id="assetpackager.packager" />
-            <argument>%assetpackager.compressor.stylesheet.options%</argument>
+            <argument>%assetpackager.compressor.javascript.options%</argument>
         </service>
         
         <service id="assetpackager.compressor.javascript.closure" class="%assetpackager.compressor.javascript.closure.class%" shared="true">
