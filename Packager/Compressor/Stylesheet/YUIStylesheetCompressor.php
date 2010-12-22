@@ -3,13 +3,11 @@
 namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Stylesheet;
 
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Packager;
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\CompressorInterface;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\BaseCompressor;
 use Symfony\Component\Process\Process;
 
-class YUIStylesheetCompressor implements CompressorInterface
+class YUIStylesheetCompressor extends BaseCompressor
 {
-    protected $packager;
-    protected $options;
     protected $executable;
     protected $commandOptions;
 
@@ -21,12 +19,10 @@ class YUIStylesheetCompressor implements CompressorInterface
      */
     public function __construct(Packager $packager, array $options = array())
     {
-        $this->packager = $packager;
-
         $this->options = array(
             'charset' => 'utf-8',
             'line_break' => 0,
-            'path' => $this->packager->getVendorDir() . DIRECTORY_SEPARATOR . 'yui-compressor' . DIRECTORY_SEPARATOR . 'yuicompressor.jar',
+            'path' => $packager->getVendorDir() . DIRECTORY_SEPARATOR . 'yui-compressor' . DIRECTORY_SEPARATOR . 'yuicompressor.jar',
         );
 
         // check option names
@@ -36,6 +32,7 @@ class YUIStylesheetCompressor implements CompressorInterface
 
         $this->options = array_merge($this->options, $options);
 
+        // check vendor path
         if (!is_file($this->options['path'])) {
             throw new \InvalidArgumentException(sprintf('The path of the yui-compressor not found (%s)', $this->options['path']));
         }
@@ -56,9 +53,7 @@ class YUIStylesheetCompressor implements CompressorInterface
             throw new \RuntimeException(sprintf('The YUIStylesheetCompressor could not compress the package ([%s]: %s).', $process->getExitCode(), $process->getErrorOutput()));
         }
 
-        $content = $process->getOutput();
-
-        return $content;
+        return $process->getOutput();
     }
 
     /**

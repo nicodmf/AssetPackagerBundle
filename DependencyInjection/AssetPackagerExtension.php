@@ -8,7 +8,6 @@ use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 class AssetPackagerExtension extends Extension
 {
-
     /**
      * Loads the AssetPackager configuration.
      *
@@ -29,11 +28,13 @@ class AssetPackagerExtension extends Extension
      */
     protected function loadDefaults(array $config, ContainerBuilder $container)
     {
-        $loader = new XmlFileLoader($container, __DIR__ . '/../Resources/config');
-        $loader->load('assetpackager.xml');
-        $loader->load('controller.xml');
-        $loader->load('templating.xml');
-
+        if (!$container->hasDefinition('assetpackager')) {
+            $loader = new XmlFileLoader($container, __DIR__ . '/../Resources/config');
+            $loader->load('assetpackager.xml');
+            $loader->load('controller.xml');
+            $loader->load('templating.xml');
+        }
+        
         // Allow these application configuration options to override the defaults
         $options = array(
             'cache_dir',
@@ -69,7 +70,7 @@ class AssetPackagerExtension extends Extension
         }
 
         $container->setAlias('assetpackager.compressor.stylesheet', 'assetpackager.compressor.stylesheet.' . $config['css']['compressor']);
-
+        
         if (isset($config['js']['options'])) {
             $container->setParameter('assetpackager.compressor.javascript.options', $config['js']['options']);
         }

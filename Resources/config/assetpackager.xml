@@ -43,9 +43,13 @@
         </service>
         
         <service id="assetpackager.compressor.javascript.jsmin" class="%assetpackager.compressor.javascript.jsmin.class%" shared="true">
+            <argument type="service" id="assetpackager.packager" />
+            <argument>%assetpackager.compressor.javascript.options%</argument>
         </service>
         
         <service id="assetpackager.compressor.javascript.packer" class="%assetpackager.compressor.javascript.packer.class%" shared="true">
+            <argument type="service" id="assetpackager.packager" />
+            <argument>%assetpackager.compressor.javascript.options%</argument>
         </service>
         
         <service id="assetpackager.compressor.javascript.yui" class="%assetpackager.compressor.javascript.yui.class%" shared="true">
@@ -54,9 +58,13 @@
         </service>
         
         <service id="assetpackager.compressor.javascript.closure" class="%assetpackager.compressor.javascript.closure.class%" shared="true">
+            <argument type="service" id="assetpackager.packager" />
+            <argument>%assetpackager.compressor.javascript.options%</argument>
         </service>
         
         <service id="assetpackager.compressor.stylesheet.cssmin" class="%assetpackager.compressor.stylesheet.cssmin.class%" shared="true">
+            <argument type="service" id="assetpackager.packager" />
+            <argument>%assetpackager.compressor.stylesheet.options%</argument>
         </service>
         
         <service id="assetpackager.compressor.stylesheet.yui" class="%assetpackager.compressor.stylesheet.yui.class%" shared="true">

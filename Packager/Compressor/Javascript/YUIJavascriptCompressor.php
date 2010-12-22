@@ -3,16 +3,14 @@
 namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Javascript;
 
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Packager;
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\CompressorInterface;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\BaseCompressor;
 use Symfony\Component\Process\Process;
 
-class YUIJavascriptCompressor implements CompressorInterface
+class YUIJavascriptCompressor extends BaseCompressor
 {
-    protected $packager;
-    protected $options;
     protected $executable;
     protected $commandOptions;
-    
+
     /**
      * Constructor.
      * 
@@ -21,15 +19,13 @@ class YUIJavascriptCompressor implements CompressorInterface
      */
     public function __construct(Packager $packager, array $options = array())
     {
-        $this->packager = $packager;
-
         $this->options = array(
             'charset' => 'utf-8',
             'line_break' => 5000,
             'munge' => true,
             'optimize' => true,
             'preserve_semicolons' => false,
-            'path' => $this->packager->getVendorDir() . DIRECTORY_SEPARATOR . 'yui-compressor' . DIRECTORY_SEPARATOR . 'yuicompressor.jar',
+            'path' => $packager->getVendorDir() . DIRECTORY_SEPARATOR . 'yui-compressor' . DIRECTORY_SEPARATOR . 'yuicompressor.jar',
         );
 
         // check option names
@@ -39,26 +35,27 @@ class YUIJavascriptCompressor implements CompressorInterface
 
         $this->options = array_merge($this->options, $options);
 
+        // check vendor path
         if (!is_file($this->options['path'])) {
             throw new \InvalidArgumentException(sprintf('The path of the yui-compressor not found (%s)', $this->options['path']));
         }
 
         $this->executable = 'java -jar ' . $this->options['path'];
         $this->commandOptions = array('--type js', sprintf('--charset %s', $this->options['charset']), sprintf('--line-break %d', $this->options['line_break']));
-        
-        if($this->options['munge'] === false) {
+
+        if ($this->options['munge'] === false) {
             $this->commandOptions[] = '--nomunge';
         }
-        
-        if($this->options['optimize'] === false) {
+
+        if ($this->options['optimize'] === false) {
             $this->commandOptions[] = '--disable-optimizations';
         }
-        
-        if($this->options['preserve_semicolons'] === true) {
+
+        if ($this->options['preserve_semicolons'] === true) {
             $this->commandOptions[] = '--preserve-semi';
         }
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -71,11 +68,9 @@ class YUIJavascriptCompressor implements CompressorInterface
             throw new \RuntimeException(sprintf('The YUIJavascriptCompressor could not compress the package ([%s]: %s).', $process->getExitCode(), $process->getErrorOutput()));
         }
 
-        $content = $process->getOutput();
-        
-        return $content;
+        return $process->getOutput();
     }
-    
+
     /**
      * Returns the command line for the compress process
      * 

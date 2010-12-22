@@ -189,8 +189,17 @@ abstract class AssetPackagerHelper extends Helper
         }
 
         $time = filemtime($cacheFile);
-        $meta = unserialize(file_get_contents($metadataFile));
-        foreach ($meta as $resource) {
+        $metadata = unserialize(file_get_contents($metadataFile));
+        
+        if($metadata['compressor'] !== get_class($this->compressor)) {
+            return true;
+        }
+        
+        if ($diff = array_diff_assoc($metadata['options'], $this->compressor->getOptions())) {
+            return true;
+        }
+        
+        foreach ($metadata['files'] as $resource) {
             if (!$resource->isUptodate($time)) {
                 return true;
             }
@@ -211,7 +220,12 @@ abstract class AssetPackagerHelper extends Helper
         $this->writeCacheFile($this->getCacheFile($file, $this->getExtension()), $dump);
 
         if ($this->options['debug']) {
-            $this->writeCacheFile($this->getCacheFile($file, 'meta'), serialize($this->fileResources[$package]));
+            $cacheData = array(
+                'compressor' => get_class($this->compressor),
+                'options' => $this->compressor->getOptions(),
+                'files' => $this->fileResources[$package],
+            );
+            $this->writeCacheFile($this->getCacheFile($file, 'meta'), serialize($cacheData));
         }
     }
 
