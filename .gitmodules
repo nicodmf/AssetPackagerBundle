@@ -1,0 +1,6 @@
+[submodule "vendor/jsmin-php"]
+	path = vendor/jsmin-php
+	url = git://github.com/rgrove/jsmin-php.git
+[submodule "vendor/cssmin"]
+	path = vendor/cssmin
+	url = git://github.com/dpitard/cssmin.git
