@@ -120,7 +120,7 @@ No option available
 #### Google Closure Compiler
 
     options:
-        compilation_level:  WHITESPACE_ONLY, SIMPLE_OPTIMIZATIONS, ADVANCED_OPTIMIZATIONS # Defaults to OPTIMIZATIONS
+        compilation_level:  WHITESPACE_ONLY, SIMPLE_OPTIMIZATIONS, ADVANCED_OPTIMIZATIONS # Defaults to SIMPLE_OPTIMIZATIONS
         path:               String # Path of the closure-compiler.jar
 
 ### Stylesheet compressors
