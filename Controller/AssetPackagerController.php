@@ -10,7 +10,7 @@ class AssetPackagerController extends Controller
     {
         $format = $this->get('request')->getRequestFormat();
         
-        if (false !== $content = $this->get('assetpackager.packager')->getPackageContent($file, $format)) {
+        if (false !== $content = $this->get('assetpackager.packager')->getContent($file, $format)) {
             $contentType = ($format == 'css') ? 'text/css' : 'application/x-javascript';
             return $this->createResponse($content, 200, array('Content-Type' => $contentType));
         }

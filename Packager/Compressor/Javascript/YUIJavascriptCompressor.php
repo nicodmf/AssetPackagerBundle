@@ -2,7 +2,7 @@
 
 namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Javascript;
 
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Packager;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\BaseCompressor;
 use Symfony\Component\Process\Process;
 
@@ -14,10 +14,10 @@ class YUIJavascriptCompressor extends BaseCompressor
     /**
      * Constructor.
      * 
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Packager $packager
+     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager $packager
      * @param array $options 
      */
-    public function __construct(Packager $packager, array $options = array())
+    public function __construct(AssetPackager $packager, array $options = array())
     {
         $this->options = array(
             'charset' => 'utf-8',
@@ -25,7 +25,7 @@ class YUIJavascriptCompressor extends BaseCompressor
             'munge' => true,
             'optimize' => true,
             'preserve_semicolons' => false,
-            'path' => $packager->getVendorDir() . DIRECTORY_SEPARATOR . 'yui-compressor' . DIRECTORY_SEPARATOR . 'yuicompressor.jar',
+            'path' => $packager->getVendorPath() . DIRECTORY_SEPARATOR . 'yui-compressor' . DIRECTORY_SEPARATOR . 'yuicompressor.jar',
         );
 
         // check option names
@@ -36,7 +36,7 @@ class YUIJavascriptCompressor extends BaseCompressor
         $this->options = array_merge($this->options, $options);
 
         // check vendor path
-        if (!is_file($this->options['path'])) {
+        if (false === is_file($this->options['path'])) {
             throw new \InvalidArgumentException(sprintf('The path of the yui-compressor not found (%s)', $this->options['path']));
         }
 
@@ -57,14 +57,14 @@ class YUIJavascriptCompressor extends BaseCompressor
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function compress($content)
     {
         $process = new Process($this->getCommandLine(), null, array(), $content);
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (false === $process->isSuccessful()) {
             throw new \RuntimeException(sprintf('The YUIJavascriptCompressor could not compress the package ([%s]: %s).', $process->getExitCode(), $process->getErrorOutput()));
         }
 

@@ -8,7 +8,7 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Bundle\FrameworkBundle\Command\Command;
 use Symfony\Bundle\FrameworkBundle\Util\Filesystem;
 
-class ClearCacheCommand extends Command
+class AssetPackagerClearCacheCommand extends Command
 {
     /**
      * @see Command
@@ -23,15 +23,13 @@ class ClearCacheCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $filesystem = new Filesystem();
-
         $finder = new Finder();
-        
-        $cacheDir = $this->container->getParameter('kernel.cache_dir') . DIRECTORY_SEPARATOR . $this->container->getParameter('assetpackager.options.cache_dir');
-        $finder = $finder->files()->in($cacheDir);
 
+        $cachePath = $this->container->getParameter('assetpackager.options.cache_path');
+        $finder = $finder->files()->in($cachePath);
+
+        $filesystem = new Filesystem();
         $count = 0;
-
         foreach ($finder as $file) {
             $filesystem->remove($file);
             $count++;

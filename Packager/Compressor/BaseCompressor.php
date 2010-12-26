@@ -7,7 +7,7 @@ class BaseCompressor implements CompressorInterface
     protected $options = array();
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function compress($content)
     {
@@ -15,7 +15,7 @@ class BaseCompressor implements CompressorInterface
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function getOptions()
     {

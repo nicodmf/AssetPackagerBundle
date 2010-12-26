@@ -17,7 +17,6 @@ class AssetPackagerExtension extends Extension
     public function configLoad($config, ContainerBuilder $container)
     {
         $this->loadDefaults($config, $container);
-        $this->createCacheDirectorys($container);
     }
 
     /**
@@ -37,11 +36,10 @@ class AssetPackagerExtension extends Extension
         
         // Allow these application configuration options to override the defaults
         $options = array(
-            'cache_dir',
-            'package_assets',
-            'embed_assets',
+            'assets_path',
+            'cache_path',
             'compress_assets',
-            'gzip_assets',
+            'package_assets',
         );
 
         foreach ($options as $key) {
@@ -86,31 +84,6 @@ class AssetPackagerExtension extends Extension
 
         if (isset($config['css']['packages'])) {
             $container->setParameter('assetpackager.packages.stylesheet', $config['css']['packages']);
-        }
-    }
-
-    /**
-     * Create the AssetPackager cache directorys
-     *
-     * @param Symfony\Component\DependencyInjection\ContainerBuilder $container A ContainerBuilder instance
-     */
-    protected function createCacheDirectorys(ContainerBuilder $container)
-    {
-        $cacheSuffixes = array(
-            'css',
-            'js',
-        );
-
-        $cacheDir = $container->getParameter('kernel.cache_dir') . DIRECTORY_SEPARATOR . $container->getParameter('assetpackager.options.cache_dir');
-        foreach ($cacheSuffixes as $cacheSuffix) {
-            $dir = $cacheDir . $cacheSuffix;
-            if (!is_dir($dir)) {
-                if (false === @mkdir($dir, 0777, true)) {
-                    throw new \RuntimeException(sprintf('Unable to create the AssetPackager cache directory (%s)', dirname($dir)));
-                }
-            } elseif (!is_writable($dir)) {
-                throw new \RuntimeException(sprintf('Unable to write in the AssetPackager cache directory (%s)', $dir));
-            }
         }
     }
 

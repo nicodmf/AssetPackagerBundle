@@ -2,7 +2,7 @@
 
 namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Javascript;
 
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Packager;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\BaseCompressor;
 use Symfony\Component\Process\Process;
 
@@ -14,14 +14,14 @@ class GoogleClosureCompressor extends BaseCompressor
     /**
      * Constructor.
      * 
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Packager $packager
+     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager $packager
      * @param array $options 
      */
-    public function __construct(Packager $packager, array $options = array())
+    public function __construct(AssetPackager $packager, array $options = array())
     {
         $this->options = array(
             'compilation_level' => 'SIMPLE_OPTIMIZATIONS',
-            'path' => $packager->getVendorDir() . DIRECTORY_SEPARATOR . 'google-closure-compiler' . DIRECTORY_SEPARATOR . 'closure-compiler.jar',
+            'path' => $packager->getVendorPath() . DIRECTORY_SEPARATOR . 'google-closure-compiler' . DIRECTORY_SEPARATOR . 'closure-compiler.jar',
         );
 
         // check option names
@@ -33,12 +33,12 @@ class GoogleClosureCompressor extends BaseCompressor
         $this->options['compilation_level'] = strtoupper($this->options['compilation_level']);
 
         // check compilation_level
-        if (!in_array($this->options['compilation_level'], $this->compilationLevels)) {
+        if (false === in_array($this->options['compilation_level'], $this->compilationLevels)) {
             throw new \InvalidArgumentException(sprintf('The GoogleClosureCompressor does not support the following compilation level: \'%s\'. Only %s.', $this->options['compilation_level'], implode(', ', $this->compilationLevels)));
         }
 
         // check vendor path
-        if (!is_file($this->options['path'])) {
+        if (false === is_file($this->options['path'])) {
             throw new \InvalidArgumentException(sprintf('The path of the closure-compiler not found (%s)', $this->options['path']));
         }
 
@@ -46,14 +46,14 @@ class GoogleClosureCompressor extends BaseCompressor
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function compress($content)
     {
         $process = new Process($this->executable, null, array(), $content);
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (false === $process->isSuccessful()) {
             throw new \RuntimeException(sprintf('The GoogleClosureCompressor could not compress the package ([%s]: %s).', $process->getExitCode(), $process->getErrorOutput()));
         }
 

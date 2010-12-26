@@ -2,7 +2,7 @@
 
 namespace Bundle\Tecbot\AssetPackagerBundle\Templating\Helper;
 
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Packager;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\CompressorInterface;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\DumperInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\Helper\AssetsHelper;
@@ -13,35 +13,44 @@ use Symfony\Component\Templating\Helper\Helper;
 
 abstract class AssetPackagerHelper extends Helper
 {
+    /**
+     * @var Symfony\Bundle\FrameworkBundle\Templating\Helper\AssetsHelper 
+     */
     protected $assetsHelper;
+    /**
+     * @var Symfony\Bundle\FrameworkBundle\Templating\Helper\RouterHelper
+     */
     protected $routerHelper;
+    /**
+     * @var Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager
+     */
     protected $packager;
-    protected $compressor;
-    protected $dumper;
+    /**
+     * @var array
+     */
     protected $options;
+    /**
+     * @var array 
+     */
     protected $packages = array();
-    protected $fileResources = array();
 
     /**
      * Constructor.
      * 
      * @param Symfony\Bundle\FrameworkBundle\Templating\Helper\AssetsHelper $assetsHelper
      * @param Symfony\Bundle\FrameworkBundle\Templating\Helper\RouterHelper $routerHelper
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Packager           $packager
+     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager      $packager
      * @param array                                                         $options 
      */
-    public function __construct(AssetsHelper $assetsHelper, RouterHelper $routerHelper, Packager $packager, array $options = array())
+    public function __construct(AssetsHelper $assetsHelper, RouterHelper $routerHelper, AssetPackager $packager, array $options = array())
     {
         $this->assetsHelper = $assetsHelper;
         $this->routerHelper = $routerHelper;
         $this->packager = $packager;
 
         $this->options = array(
-            'cache_dir' => null,
-            'debug' => false,
             'package_assets' => true,
             'compress_assets' => true,
-            'embed_assets' => false,
         );
 
         // check option names
@@ -50,26 +59,6 @@ abstract class AssetPackagerHelper extends Helper
         }
 
         $this->options = array_merge($this->options, $options);
-    }
-
-    /**
-     * Set the compressor.
-     * 
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\CompressorInterface  $compressor 
-     */
-    public function setCompressor(CompressorInterface $compressor)
-    {
-        $this->compressor = $compressor;
-    }
-
-    /**
-     * Set the dumper.
-     * 
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\DumperInterface $dumper 
-     */
-    public function setDumper(DumperInterface $dumper)
-    {
-        $this->dumper = $dumper;
     }
 
     /**
@@ -103,27 +92,15 @@ abstract class AssetPackagerHelper extends Helper
         $html = '';
         foreach ($this->packages as $package => $attributes) {
             try {
-                $files = $this->getPackageFiles($package);
-                if (!$this->options['package_assets']) {
-                    foreach ($files as $file) {
+                if (false === $this->options['package_assets']) {
+                    $packageData = $this->packager->get($package, $this->getFormat());
+                    foreach ($packageData['paths'] as $file) {
                         $html .= $this->renderTag($this->assetsHelper->getUrl($file), $attributes);
                     }
                     continue;
                 }
 
-                if ($this->options['debug']) {
-                    foreach ($files as $file) {
-                        $this->fileResources[$package][] = new FileResource($file);
-                    }
-                }
-
-                $cacheHash = md5($package . implode($files));
-                if ($this->needsReload($cacheHash)) {
-                    $dump = $this->compress($this->dumper->dump($files));
-                    $this->updateCache($package, $cacheHash, $dump);
-                }
-
-                $html .= $this->renderTag($this->generatePackageURL($cacheHash), $attributes);
+                $html .= $this->renderTag($this->generatePackageURL($this->packager->compress($package, $this->getFormat())), $attributes);
             } catch (\InvalidArgumentException $ex) {
                 // No Package found
                 $html .= $this->renderTag($this->assetsHelper->getUrl($package), $attributes);
@@ -153,110 +130,15 @@ abstract class AssetPackagerHelper extends Helper
     }
 
     /**
-     * Returns a compressed package
-     * 
-     * @return sting A compressed package
-     */
-    protected function compress($content)
-    {
-        if ($this->options['compress_assets']) {
-            $content = $this->compressor->compress($content);
-        }
-
-        return $content;
-    }
-
-    /**
-     * Check the cache file.
-     * 
-     * @param string $file
-     * @return boolean 
-     */
-    protected function needsReload($file)
-    {
-        $cacheFile = $this->getCacheFile($file, $this->getExtension());
-        if (!file_exists($cacheFile)) {
-            return true;
-        }
-
-        if (!$this->options['debug']) {
-            return false;
-        }
-
-        $metadataFile = $this->getCacheFile($file, 'meta');
-        if (!file_exists($metadataFile)) {
-            return true;
-        }
-
-        $time = filemtime($cacheFile);
-        $metadata = unserialize(file_get_contents($metadataFile));
-        
-        if($metadata['compressor'] !== get_class($this->compressor)) {
-            return true;
-        }
-        
-        if ($diff = array_diff_assoc($metadata['options'], $this->compressor->getOptions())) {
-            return true;
-        }
-        
-        foreach ($metadata['files'] as $resource) {
-            if (!$resource->isUptodate($time)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Update the cache file of the package.
-     * 
-     * @param string $package
-     * @param string $file
-     * @param string $dump 
-     */
-    protected function updateCache($package, $file, $dump)
-    {
-        $this->writeCacheFile($this->getCacheFile($file, $this->getExtension()), $dump);
-
-        if ($this->options['debug']) {
-            $cacheData = array(
-                'compressor' => get_class($this->compressor),
-                'options' => $this->compressor->getOptions(),
-                'files' => $this->fileResources[$package],
-            );
-            $this->writeCacheFile($this->getCacheFile($file, 'meta'), serialize($cacheData));
-        }
-    }
-
-    /**
-     * Write a package cache file to the filesystem .
-     * 
-     * @throws \RuntimeException When cache file can't be wrote
-     */
-    protected function writeCacheFile($file, $content)
-    {
-        $tmpFile = tempnam(dirname($file), basename($file));
-        if (false !== @file_put_contents($tmpFile, $content) && @rename($tmpFile, $file)) {
-            chmod($file, 0644);
-
-            return;
-        }
-
-        throw new \RuntimeException(sprintf('Failed to write cache file "%s".', $file));
-    }
-
-    /**
-     * Return the path of the cache file from a package.
+     * Generates a URL for a package.
      *
-     * @param  string $file The cache file of the package
-     * @param  string $extension The extension of the cache file
+     * @param  string $file The URL of the package
      *
-     * @return string The path of the cach file
+     * @return string The generated URL
      */
-    protected function getCacheFile($file, $extension)
+    protected function generatePackageURL($file)
     {
-        return $this->options['cache_dir'] . $file . '.' . $extension;
+        return $this->routerHelper->generate('_assetpackager_get', array('file' => $file, '_format' => $this->getFormat()));
     }
 
     /**
@@ -267,25 +149,9 @@ abstract class AssetPackagerHelper extends Helper
     abstract protected function renderTag($path, array $attributes = array());
 
     /**
-     * Returns all file paths for a package.
-     * 
-     * @return array An array of file paths
-     */
-    abstract protected function getPackageFiles($package);
-
-    /**
-     * Generates a URL for a package.
+     * Get a file format.
      *
-     * @param  string $file The URL of the package
-     *
-     * @return string The generated URL
+     * @return string The file format
      */
-    abstract protected function generatePackageURL($file);
-
-    /**
-     * Get a file extension.
-     *
-     * @return string The file extension
-     */
-    abstract protected function getExtension();
+    abstract protected function getFormat();
 }

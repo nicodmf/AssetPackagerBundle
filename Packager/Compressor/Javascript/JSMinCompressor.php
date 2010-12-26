@@ -2,7 +2,7 @@
 
 namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Javascript;
 
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Packager;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\BaseCompressor;
 
 class JSMinCompressor extends BaseCompressor
@@ -10,13 +10,13 @@ class JSMinCompressor extends BaseCompressor
     /**
      * Constructor.
      * 
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Packager $packager
+     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager $packager
      * @param array $options 
      */
-    public function __construct(Packager $packager, array $options = array())
+    public function __construct(AssetPackager $packager, array $options = array())
     {
         $this->options = array(
-            'path' => $packager->getVendorDir() . DIRECTORY_SEPARATOR . 'jsmin-php' . DIRECTORY_SEPARATOR . 'jsmin.php',
+            'path' => $packager->getVendorPath() . DIRECTORY_SEPARATOR . 'jsmin-php' . DIRECTORY_SEPARATOR . 'jsmin.php',
         );
 
         // check option names
@@ -27,13 +27,13 @@ class JSMinCompressor extends BaseCompressor
         $this->options = array_merge($this->options, $options);
 
         // check vendor path
-        if (!is_file($this->options['path'])) {
+        if (false === is_file($this->options['path'])) {
             throw new \InvalidArgumentException(sprintf('The path of the jsmin.php not found (%s)', $this->options['path']));
         }
     }
 
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function compress($content)
     {

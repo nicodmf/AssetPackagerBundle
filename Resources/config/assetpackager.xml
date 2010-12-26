@@ -5,9 +5,16 @@
     xsi:schemaLocation="http://www.symfony-project.org/schema/dic/services http://www.symfony-project.org/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="assetpackager.packager.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Packager</parameter>
+        <!-- packager -->
+        <parameter key="assetpackager.packager.class">Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager</parameter>
         <parameter key="assetpackager.packages.javascript" type="collection"></parameter>
         <parameter key="assetpackager.packages.stylesheet" type="collection"></parameter>
+        
+        <!-- options -->
+        <parameter key="assetpackager.options.assets_path">%kernel.root_dir%/../web</parameter>
+        <parameter key="assetpackager.options.cache_path">%kernel.cache_dir%/assetpackager</parameter>
+        <parameter key="assetpackager.options.compress_assets">true</parameter>
+        <parameter key="assetpackager.options.package_assets">true</parameter>
         
         <!-- javascript compressors -->
         <parameter key="assetpackager.compressor.javascript.jsmin.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Javascript\JSMinCompressor</parameter>
@@ -15,31 +22,39 @@
         <parameter key="assetpackager.compressor.javascript.yui.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Javascript\YUIJavascriptCompressor</parameter>
         <parameter key="assetpackager.compressor.javascript.closure.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Javascript\GoogleClosureCompressor</parameter>
         <parameter key="assetpackager.compressor.javascript.options" type="collection"></parameter>
-        <parameter key="assetpackager.compressor.javascript.packages" type="collection"></parameter>
         
         <!-- stylesheet compressors -->
         <parameter key="assetpackager.compressor.stylesheet.cssmin.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Stylesheet\CSSMinCompressor</parameter>
         <parameter key="assetpackager.compressor.stylesheet.yui.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Stylesheet\YUIStylesheetCompressor</parameter>
         <parameter key="assetpackager.compressor.stylesheet.options" type="collection"></parameter>
         
-        <!-- dumpers -->
-        <parameter key="assetpackager.dumper.javascript.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\Javascript\JavascriptDumper</parameter>
-        <parameter key="assetpackager.dumper.stylesheet.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\Stylesheet\StylesheetDumper</parameter>
-        
-        <!-- options -->
-        <parameter key="assetpackager.options.cache_dir">assetpackager/</parameter>
-        <parameter key="assetpackager.options.package_assets">true</parameter>
-        <parameter key="assetpackager.options.embed_assets">false</parameter>
-        <parameter key="assetpackager.options.compress_assets">true</parameter>
-        <parameter key="assetpackager.options.gzip_assets">true</parameter>
+        <!-- dumper -->
+        <parameter key="assetpackager.dumper.class">Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\Dumper</parameter>
     </parameters>
     
     <services>
+        
         <service id="assetpackager.packager" class="%assetpackager.packager.class%" shared="true">
-            <argument type="service" id="request" />
-            <argument>%kernel.cache_dir%/%assetpackager.options.cache_dir%</argument>
-            <argument>%assetpackager.packages.javascript%</argument>
-            <argument>%assetpackager.packages.stylesheet%</argument>
+            <argument type="collection">
+                <argument key="assets_path">%assetpackager.options.assets_path%</argument>
+                <argument key="cache_path">%assetpackager.options.cache_path%</argument>
+                <argument key="compress_assets">%assetpackager.options.compress_assets%</argument>
+                <argument key="package_assets">%assetpackager.options.package_assets%</argument>
+                <argument key="debug">%kernel.debug%</argument>
+            </argument>
+            <argument type="collection">
+                <argument key="js">%assetpackager.packages.javascript%</argument>
+                <argument key="css">%assetpackager.packages.stylesheet%</argument>
+            </argument>
+            <call method="setJavascriptCompressor">
+                <argument type="service" id="assetpackager.compressor.javascript" />
+            </call>
+            <call method="setStylesheetCompressor">
+                <argument type="service" id="assetpackager.compressor.stylesheet" />
+            </call>
+            <call method="setDumper">
+                <argument type="service" id="assetpackager.dumper" />
+            </call>
         </service>
         
         <service id="assetpackager.compressor.javascript.jsmin" class="%assetpackager.compressor.javascript.jsmin.class%" shared="true">
@@ -72,10 +87,8 @@
             <argument>%assetpackager.compressor.stylesheet.options%</argument>
         </service>
         
-        <service id="assetpackager.dumper.javascript" class="%assetpackager.dumper.javascript.class%" shared="true">
+        <service id="assetpackager.dumper" class="%assetpackager.dumper.class%" shared="true">
         </service>
         
-        <service id="assetpackager.dumper.stylesheet" class="%assetpackager.dumper.stylesheet.class%" shared="true">
-        </service>
     </services>
 </container>

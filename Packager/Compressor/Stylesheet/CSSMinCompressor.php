@@ -2,7 +2,7 @@
 
 namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\Stylesheet;
 
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Packager;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\BaseCompressor;
 
 class CSSMinCompressor extends BaseCompressor
@@ -10,10 +10,10 @@ class CSSMinCompressor extends BaseCompressor
     /**
      * Constructor.
      * 
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Packager $packager
+     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager $packager
      * @param array $options 
      */
-    public function __construct(Packager $packager, array $options = array())
+    public function __construct(AssetPackager $packager, array $options = array())
     {
         $this->options = array(
             'remove-empty-blocks'     => true,
@@ -24,7 +24,7 @@ class CSSMinCompressor extends BaseCompressor
             'compress-color-values'   => false,
             'compress-unit-values'    => false,
             'emulate-css3-variables'  => true,
-            'path' => $packager->getVendorDir() . DIRECTORY_SEPARATOR . 'cssmin' . DIRECTORY_SEPARATOR . 'cssmin.php',
+            'path' => $packager->getVendorPath() . DIRECTORY_SEPARATOR . 'cssmin' . DIRECTORY_SEPARATOR . 'cssmin.php',
         );
 
         // check option names
@@ -35,13 +35,13 @@ class CSSMinCompressor extends BaseCompressor
         $this->options = array_merge($this->options, $options);
 
         // check vendor path
-        if (!is_file($this->options['path'])) {
+        if (false === is_file($this->options['path'])) {
             throw new \InvalidArgumentException(sprintf('The path of the cssmin.php not found (%s)', $this->options['path']));
         }
     }
     
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function compress($content)
     {

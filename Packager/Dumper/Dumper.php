@@ -1,20 +1,18 @@
 <?php
 
-namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\Javascript;
+namespace Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper;
 
-use Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\DumperInterface;
-
-class JavascriptDumper implements DumperInterface
+class Dumper implements DumperInterface
 {
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     public function dump(array $files)
     {
         $content = '';
 
         foreach ($files as $file) {
-            if (!is_file($file)) {
+            if (false === is_file($file)) {
                 throw new \InvalidArgumentException(sprintf('The file "%s" does not exist', $file));
             }
 
