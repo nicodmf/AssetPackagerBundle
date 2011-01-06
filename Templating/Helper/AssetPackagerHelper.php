@@ -2,7 +2,7 @@
 
 namespace Bundle\Tecbot\AssetPackagerBundle\Templating\Helper;
 
-use Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager;
+use Bundle\Tecbot\AssetPackagerBundle\Packager\Manager;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Compressor\CompressorInterface;
 use Bundle\Tecbot\AssetPackagerBundle\Packager\Dumper\DumperInterface;
 use Symfony\Bundle\FrameworkBundle\Templating\Helper\AssetsHelper;
@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\Resource\FileResource;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Templating\Helper\Helper;
 
-abstract class AssetPackagerHelper extends Helper
+class AssetPackagerHelper extends Helper
 {
     /**
      * @var Symfony\Bundle\FrameworkBundle\Templating\Helper\AssetsHelper 
@@ -22,9 +22,9 @@ abstract class AssetPackagerHelper extends Helper
      */
     protected $routerHelper;
     /**
-     * @var Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager
+     * @var Bundle\Tecbot\AssetPackagerBundle\Packager\Manager 
      */
-    protected $packager;
+    protected $manager;
     /**
      * @var array
      */
@@ -39,14 +39,14 @@ abstract class AssetPackagerHelper extends Helper
      * 
      * @param Symfony\Bundle\FrameworkBundle\Templating\Helper\AssetsHelper $assetsHelper
      * @param Symfony\Bundle\FrameworkBundle\Templating\Helper\RouterHelper $routerHelper
-     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\AssetPackager      $packager
+     * @param Bundle\Tecbot\AssetPackagerBundle\Packager\Manager            $manager
      * @param array                                                         $options 
      */
-    public function __construct(AssetsHelper $assetsHelper, RouterHelper $routerHelper, AssetPackager $packager, array $options = array())
+    public function __construct(AssetsHelper $assetsHelper, RouterHelper $routerHelper, Manager $manager, array $options = array())
     {
         $this->assetsHelper = $assetsHelper;
         $this->routerHelper = $routerHelper;
-        $this->packager = $packager;
+        $this->manager = $manager;
 
         $this->options = array(
             'package_assets' => true,
@@ -64,22 +64,23 @@ abstract class AssetPackagerHelper extends Helper
     /**
      * Adds a asset package.
      *
-     * @param string $package A asset package
+     * @param string $packages A asset package
      * @param array  $attributes An array of attributes
      */
-    public function add($package, $attributes = array())
+    public function add($packages, $format, $attributes = array())
     {
-        $this->packages[$package] = $attributes;
-    }
-
-    /**
-     * Returns all asset packages.
-     *
-     * @return array An array of asset packages to include
-     */
-    public function get()
-    {
-        return $this->packages;
+        
+        if (false === $this->isValidFormat($format)) {
+            throw new \InvalidArgumentException(sprintf('The AssetPackagerHelper does not support the following format: \'%s\'.', $format));
+        }
+        
+        if(is_scalar($packages)) {
+            $packages = array($packages);
+        }
+                
+        foreach($packages as $package) {
+            $this->packages[$format][$package] = $attributes;
+        }
     }
 
     /**
@@ -87,23 +88,41 @@ abstract class AssetPackagerHelper extends Helper
      *
      * @return string The HTML representation of the packages
      */
-    public function render()
+    public function render($format = null)
+    {
+        if (null !== $format && false === $this->isValidFormat($format)) {
+            throw new \InvalidArgumentException(sprintf('The AssetPackagerHelper does not support the following format: \'%s\'.', $format));
+        }
+
+        $html = '';
+        
+        if (isset($this->packages['css']) && (null === $format || 'css' === $format)) {
+            $html .= $this->doRender($this->packages['css'], 'css');
+        }
+
+        if (isset($this->packages['js']) && (null === $format || 'js' === $format)) {
+            $html .= $this->doRender($this->packages['js'], 'js');
+        }
+
+        return $html;
+    }
+
+    protected function doRender(array $packages, $format)
     {
         $html = '';
-        foreach ($this->packages as $package => $attributes) {
+        foreach ($packages as $packageName => $attributes) {
             try {
-                if (false === $this->options['package_assets']) {
-                    $packageData = $this->packager->get($package, $this->getFormat());
-                    foreach ($packageData['paths'] as $file) {
-                        $html .= $this->renderTag($this->assetsHelper->getUrl($file), $attributes);
+                $package = $this->manager->get($packageName, $format);
+                if (false === $package->options->get('package_assets', $this->options['package_assets'])) {
+                    foreach ($package->paths as $path) {
+                        $html .= $this->renderTag($this->assetsHelper->getUrl($path), $format, $attributes);
                     }
                     continue;
                 }
-
-                $html .= $this->renderTag($this->generatePackageURL($this->packager->compress($package, $this->getFormat())), $attributes);
+                $html .= $this->renderTag($this->generatePackageURL($this->manager->compress($package), $format), $attributes);
             } catch (\InvalidArgumentException $ex) {
                 // No Package found
-                $html .= $this->renderTag($this->assetsHelper->getUrl($package), $attributes);
+                $html .= $this->renderTag($this->assetsHelper->getUrl($packageName), $attributes);
             }
         }
 
@@ -112,7 +131,6 @@ abstract class AssetPackagerHelper extends Helper
 
     /**
      * Outputs HTML representation of the links to packages.
-     *
      */
     public function output()
     {
@@ -128,6 +146,10 @@ abstract class AssetPackagerHelper extends Helper
     {
         return $this->render();
     }
+    
+    protected function isValidFormat($format) {
+        return in_array($format, array('js', 'css'));
+    }
 
     /**
      * Generates a URL for a package.
@@ -136,9 +158,9 @@ abstract class AssetPackagerHelper extends Helper
      *
      * @return string The generated URL
      */
-    protected function generatePackageURL($file)
+    protected function generatePackageURL($file, $format)
     {
-        return $this->routerHelper->generate('_assetpackager_get', array('file' => $file, '_format' => $this->getFormat()));
+        return $this->routerHelper->generate('_assetpackager_get', array('file' => $file, '_format' => $format));
     }
 
     /**
@@ -146,12 +168,26 @@ abstract class AssetPackagerHelper extends Helper
      *
      * @return String html tag
      */
-    abstract protected function renderTag($path, array $attributes = array());
+    protected function renderTag($path, $format, array $attributes = array()) {
+        $atts = '';
+        foreach ($attributes as $key => $value) {
+            $atts .= ' ' . sprintf('%s="%s"', $key, htmlspecialchars($value, ENT_QUOTES, $this->assetsHelper->getCharset()));
+        }
+        
+        if('css' === $format) {
+            return sprintf('<link href="%s" rel="stylesheet" type="text/css"%s />', $path, $atts) . "\n";
+        }
 
+        return sprintf('<script type="text/javascript" src="%s"%s></script>', $path, $atts) . "\n";
+    }
+    
     /**
-     * Get a file format.
+     * Returns the canonical name of this helper.
      *
-     * @return string The file format
+     * @return string The canonical name
      */
-    abstract protected function getFormat();
+    public function getName()
+    {
+        return 'assetpackager';
+    }
 }

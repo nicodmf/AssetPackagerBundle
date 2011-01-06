@@ -8,6 +8,8 @@ use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 class AssetPackagerExtension extends Extension
 {
+    protected $container;
+    
     /**
      * Loads the AssetPackager configuration.
      *
@@ -16,24 +18,24 @@ class AssetPackagerExtension extends Extension
      */
     public function configLoad($config, ContainerBuilder $container)
     {
-        $this->loadDefaults($config, $container);
+        $this->container = $container;
+        $this->loadDefaults($config);
     }
 
     /**
      * Loads the default configuration.
      *
      * @param array $config An array of configuration settings
-     * @param Symfony\Component\DependencyInjection\ContainerBuilder $container A ContainerBuilder instance
      */
-    protected function loadDefaults(array $config, ContainerBuilder $container)
+    protected function loadDefaults(array $config)
     {
-        if (!$container->hasDefinition('assetpackager')) {
-            $loader = new XmlFileLoader($container, __DIR__ . '/../Resources/config');
+        if (!$this->container->hasDefinition('assetpackager')) {
+            $loader = new XmlFileLoader($this->container, __DIR__ . '/../Resources/config');
             $loader->load('assetpackager.xml');
             $loader->load('controller.xml');
             $loader->load('templating.xml');
         }
-        
+
         // Allow these application configuration options to override the defaults
         $options = array(
             'assets_path',
@@ -44,47 +46,69 @@ class AssetPackagerExtension extends Extension
 
         foreach ($options as $key) {
             if (isset($config[$key])) {
-                $container->setParameter('assetpackager.options.' . $key, $config[$key]);
+                $this->container->setParameter('assetpackager.options.' . $key, $config[$key]);
             }
 
             $nKey = str_replace('_', '-', $key);
             if (isset($config[$nKey])) {
-                $container->setParameter('assetpackager.options.' . $key, $config[$nKey]);
+                $this->container->setParameter('assetpackager.options.' . $key, $config[$nKey]);
             }
         }
 
-        if (isset($config['js']['compressor']) && $container->has('assetpackager.compressor.javascript.' . strtolower($config['js']['compressor']))) {
-            $config['js']['compressor'] = strtolower($config['js']['compressor']);
-        } else {
-            $config['js']['compressor'] = 'jsmin';
+        if (false === isset($config['js']['compressor']) || null === $config['js']['compressor']) {
+            $config['js']['compressor'] = array();
         }
+        $this->container->setAlias('assetpackager.compressor.js', $this->resolveCompressorService($config['js']['compressor'], 'js', 'jsmin'));
 
-        $container->setAlias('assetpackager.compressor.javascript', 'assetpackager.compressor.javascript.' . $config['js']['compressor']);
-
-        if (isset($config['css']['compressor']) && $container->has('assetpackager.compressor.stylesheet.' . strtolower($config['css']['compressor']))) {
-            $config['css']['compressor'] = strtolower($config['css']['compressor']);
-        } else {
-            $config['css']['compressor'] = 'cssmin';
+        if (false === isset($config['css']['compressor']) || null === $config['css']['compressor']) {
+            $config['css']['compressor'] = array();
         }
-
-        $container->setAlias('assetpackager.compressor.stylesheet', 'assetpackager.compressor.stylesheet.' . $config['css']['compressor']);
+        $this->container->setAlias('assetpackager.compressor.css', $this->resolveCompressorService($config['css']['compressor'], 'css', 'cssmin'));
         
-        if (isset($config['js']['options'])) {
-            $container->setParameter('assetpackager.compressor.javascript.options', $config['js']['options']);
-        }
-
-        if (isset($config['css']['options'])) {
-            $container->setParameter('assetpackager.compressor.stylesheet.options', $config['css']['options']);
-        }
-
-
         if (isset($config['js']['packages'])) {
-            $container->setParameter('assetpackager.packages.javascript', $config['js']['packages']);
+            $this->container->setParameter('assetpackager.packages.js', $config['js']['packages']);
         }
 
         if (isset($config['css']['packages'])) {
-            $container->setParameter('assetpackager.packages.stylesheet', $config['css']['packages']);
+            $this->container->setParameter('assetpackager.packages.css', $config['css']['packages']);
         }
+    }
+
+    protected function resolveCompressorService($compressor, $format, $default)
+    {
+        $compressorService = null;
+
+        if (is_scalar($compressor)) {
+            $compressor = array(
+                'id' => $compressor,
+            );
+        }
+
+        if (false === isset($compressor['id']) && false === isset($compressor['options'])) {
+            $compressor = array(
+                'options' => $compressor,
+            );
+        }
+
+        if (false === isset($compressor['id'])) {
+            $compressor['id'] = $default;
+        }
+
+        if (false === isset($compressor['options'])) {
+            $compressor['options'] = array();
+        }
+
+        if ($this->container->has($compressor['id'])) {
+            $compressorService = $compressor['id'];
+        } else if ($this->container->has("assetpackager.compressor.$format." . $compressor['id'])) {
+            $compressorService = "assetpackager.compressor.$format." . $compressor['id'];
+        } else {
+            $compressorService = "assetpackager.compressor.$format.$default";
+        }
+
+        $this->container->setParameter("$compressorService.options", $compressor['options']);
+        
+        return $compressorService;
     }
 
     /**

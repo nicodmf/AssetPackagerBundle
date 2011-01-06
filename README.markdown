@@ -1,5 +1,16 @@
 Provides assets packaging and compression.
 
+## Features
+
+- package your assets to bundles
+- compress your assets
+
+## TODO
+
+- nested packages
+- create packages on the fly in templates
+- add compilers for *.less and other third party compilers
+
 ## Installation
 
 ### Add Tecbot\AssetPackagerBundle to your src/Bundle dir
@@ -33,65 +44,73 @@ Provides assets packaging and compression.
     assetpackager.config:
         js: # Javascript Config
             packages: # Javascript Packages
-                core: # Package Name
-                    - /js/underscore.js
-                    - /js/backbone.js
-                    - /js/main.js
+                pack1: # Package Name
+                    - bundles/bundle/js/pack1.js
+                    - bundles/bundle/js/pack1_1.js
         css: # Stylesheet Config
             packages: # Stylesheet Packages
-                core: # Package Name
-                    - /css/reset.css
-                    - /css/grid.css
-                    - /css/style.css
+                pack1: # Package Name
+                    - bundles/bundle/css/pack1.css
+                    - bundles/bundle/css/pack1_1.css
 
 #### Advanced config
-    
+
     # app/config/config.yml
     assetpackager.config:
         assets_path: String # Default to %kernel.root_dir%/../web
         cache_path: String # Default to %kernel.cache_dir%/assetpackager
-        compress_assets: Boolean # Defaults to true. When false, JavaScript and CSS packages will be left uncompressed. Disabling compression is only recommended if you're packaging assets in development
-        package_assets: Boolean # Defaults to true, packaging and caching assets
+        compress_assets: Boolean # Defaults to true. When false, JavaScript and CSS packages will be left uncompressed. Disabling compression is only recommended if you're packaging assets in development.
+        package_assets: Boolean # Defaults to true, packaging and caching assets.
         js: # Javascript Config
-            compressor: jsmin, packer, yui, closure # Defaults to jsmin
-            options: ~ # compressor options. See compressor section
+            compressor: jsmin, packer, yui, closure or service_id # Defaults to jsmin.
+            # OR
+            compressor:
+                id: jsmin, packer, yui, closure or service_id # Defaults to jsmin
+                options: ~ # compressor options. See compressor section.
+            # OR
+            compressor:
+               - # override default compressor options. See compressor section.
             packages: # Javascript Packages
-                core: # Package Name
-                    - /js/underscore.js
-                    - /js/backbone.js
-                    - /js/main.js
+                pack1: # Package Name
+                    compressor: # override default compressor options. See above.
+                    output: String # Output name for the cache file. Defaults a md5 hash.
+                    options: ~ # override global options. e.g. compress_assets
+                    paths:
+                        - bundles/bundle/js/pack1.js
+                        - bundles/bundle/js/pack1_1.js
         css: # Stylesheet Config
-            compressor: cssmin, yui # Defaults to cssmin
-            options: ~ # compressor options. See compressor section
-            packages: # Stylesheet Packages
-                core: # Package Name
-                    - /css/reset.css
-                    - /css/grid.css
-                    - /css/style.css
+            # javascript like. available compiler: cssmin, yui # Defaults to cssmin
 
 ## Use
 
-To use AssetPackagerBundle, call the classic method to add a stylesheet or javascript.
-
 ### Twig
 
-    {% javascript 'core' %} # Package
-    {% javascript 'js/main.js' %}
-    {% stylesheet 'core' %} # Package
-    {% stylesheet 'css/form.css' %}
-    
-    {% javascripts %}
-    {% stylesheets %}
+    # Add packages to helper
+    {{ assetpackage('pack1', 'js') }} # add javascript package
+    {{ assetpackage(['pack1', 'pack2', 'pack3'], 'js') }} # add multiple javascript packages
+
+    {{ assetpackage('pack1', 'css') }} # add stylesheet package
+    {{ assetpackage(['pack1', 'pack2', 'pack3'], 'css') }} # add multiple stylesheet packages
+
+    # render packages
+    {{ assetpackages() }} # render all packages you added to the helper
+    {{ assetpackages('css') }} # render only stylesheet packages
+    {{ assetpackages('js') }} # render only javascript packages
+
 
 ### PHP
-
-    <?php $view['javascripts']->add('core') ?> # Package
-    <?php $view['javascripts']->add('js/main.js') ?>
-    <?php $view['stylesheets']->add('core') ?> # Package
-    <?php $view['stylesheets']->add('css/form.css' ?>
     
-    <?php echo $view['javascripts'] ?>
-    <?php echo $view['stylesheets'] ?>
+    # Add packages to helper
+    <?php $view['assetpackager']->add('pack1', 'js'); ?> # add javascript package
+    <?php $view['assetpackager']->add(array('pack1', 'pack2', 'pack3'), 'js'); ?> # add multiple javascript packages
+
+    <?php $view['assetpackager']->add('pack1', 'css'); ?> # add stylesheet package
+    <?php $view['assetpackager']->add(array('pack1', 'pack2', 'pack3'), 'css'); ?> # add multiple stylesheet packages
+
+    # render packages
+    <?php echo $view['assetpackager']->render(); ?> # render all packages you added to the helper
+    <?php echo $view['assetpackager']->render('css'); ?> # render only stylesheet packages
+    <?php echo $view['assetpackager']->render('js'); ?> # render only javascript packages
 
 ## Compressors Options
 

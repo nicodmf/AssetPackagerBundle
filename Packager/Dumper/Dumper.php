@@ -12,11 +12,7 @@ class Dumper implements DumperInterface
         $content = '';
 
         foreach ($files as $file) {
-            if (false === is_file($file)) {
-                throw new \InvalidArgumentException(sprintf('The file "%s" does not exist', $file));
-            }
-
-            $content .= file_get_contents($file) . "\n";
+            $content .= file_get_contents($file->getPath()) . "\n";
         }
 
         return $content;

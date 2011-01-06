@@ -5,32 +5,26 @@
     xsi:schemaLocation="http://www.symfony-project.org/schema/dic/services http://www.symfony-project.org/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="templating.helper.javascripts.class">Bundle\Tecbot\AssetPackagerBundle\Templating\Helper\JavascriptsHelper</parameter>
-        <parameter key="templating.helper.stylesheets.class">Bundle\Tecbot\AssetPackagerBundle\Templating\Helper\StylesheetsHelper</parameter>
+        <parameter key="templating.helper.assetpackager.class">Bundle\Tecbot\AssetPackagerBundle\Templating\Helper\AssetPackagerHelper</parameter>
+        <parameter key="twig.extension.assetpackager.class">Bundle\Tecbot\AssetPackagerBundle\Twig\Extension\AssetPackagerExtension</parameter>
     </parameters>
     
     <services>
         
-        <service id="templating.helper.javascripts" class="%templating.helper.javascripts.class%">
-            <tag name="templating.helper" alias="javascripts" />
+        <service id="templating.helper.assetpackager" class="%templating.helper.assetpackager.class%">
+            <tag name="templating.helper" alias="assetpackager" />
             <argument type="service" id="templating.helper.assets" />
             <argument type="service" id="templating.helper.router" />
-            <argument type="service" id="assetpackager.packager" />
+            <argument type="service" id="assetpackager.manager" />
             <argument type="collection">
                 <argument key="package_assets">%assetpackager.options.package_assets%</argument>
                 <argument key="compress_assets">%assetpackager.options.compress_assets%</argument>
             </argument>
         </service>
         
-        <service id="templating.helper.stylesheets" class="%templating.helper.stylesheets.class%">
-            <tag name="templating.helper" alias="stylesheets" />
-            <argument type="service" id="templating.helper.assets" />
-            <argument type="service" id="templating.helper.router" />
-            <argument type="service" id="assetpackager.packager" />
-            <argument type="collection">
-                <argument key="package_assets">%assetpackager.options.package_assets%</argument>
-                <argument key="compress_assets">%assetpackager.options.compress_assets%</argument>
-            </argument>
+        <service id="twig.extension.assetpackager" class="%twig.extension.assetpackager.class%" public="false">
+            <tag name="twig.extension" />
+            <argument type="service" id="templating.helper.assetpackager" />
         </service>
         
     </services>
