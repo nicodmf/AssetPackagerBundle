@@ -7,7 +7,8 @@ Provides assets packaging and compression.
 
 ## TODO
 
-- nested packages
+- add support for wildcards e.g. bundles/bundle/js/core/*
+- add support for nested packages
 - create packages on the fly in templates
 - add compilers for *.less and other third party compilers
 
