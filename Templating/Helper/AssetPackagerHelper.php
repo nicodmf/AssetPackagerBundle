@@ -119,7 +119,7 @@ class AssetPackagerHelper extends Helper
                     }
                     continue;
                 }
-                $html .= $this->renderTag($this->generatePackageURL($this->manager->compress($package), $format), $attributes);
+                $html .= $this->renderTag($this->generatePackageURL($this->manager->compress($package), $format), $format, $attributes);
             } catch (\InvalidArgumentException $ex) {
                 // No Package found
                 $html .= $this->renderTag($this->assetsHelper->getUrl($packageName), $attributes);
