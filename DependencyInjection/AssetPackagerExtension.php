@@ -2,6 +2,7 @@
 
 namespace Bundle\Tecbot\AssetPackagerBundle\DependencyInjection;
 
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
@@ -16,7 +17,7 @@ class AssetPackagerExtension extends Extension
      * @param array $config  An array of configuration settings
      * @param Symfony\Component\DependencyInjection\ContainerBuilder $container A ContainerBuilder instance
      */
-    public function configLoad($config, ContainerBuilder $container)
+    public function load(array $config, ContainerBuilder $container)
     {
         $this->container = $container;
         $this->loadDefaults($config);
@@ -30,7 +31,7 @@ class AssetPackagerExtension extends Extension
     protected function loadDefaults(array $config)
     {
         if (!$this->container->hasDefinition('assetpackager')) {
-            $loader = new XmlFileLoader($this->container, __DIR__ . '/../Resources/config');
+            $loader = new XmlFileLoader($this->container, new FileLocator(array(__DIR__ . '/../Resources/config')));
             $loader->load('assetpackager.xml');
             $loader->load('controller.xml');
             $loader->load('templating.xml');

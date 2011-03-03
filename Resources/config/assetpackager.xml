@@ -40,7 +40,7 @@
     
     <services>
         
-        <service id="assetpackager.manager" class="%assetpackager.manager.class%" shared="true">
+        <service id="assetpackager.manager" class="%assetpackager.manager.class%">
             <argument type="service" id="service_container" />
             <argument type="service" id="assetpackager.dumper" />
             <argument type="collection">
